@@ -1,0 +1,249 @@
+
+#include <stdio.h>
+
+#define MAX 10
+#define INF 9999
+
+int graph[MAX][MAX], dist[MAX], visited[MAX], parent[MAX];
+char location[MAX][30];
+int n = 0, source = -1, ready = 0;
+
+void enterGraph()
+{
+    int i, j, w;
+
+    printf("Enter number of locations: ");
+    scanf("%d", &n);
+
+    if (n < 1 || n > MAX) {
+        printf("Enter locations between 1 and %d.\n", MAX);
+        n = 0;
+        ready = 0;
+        source = -1;
+        return;
+    }
+
+    for (i = 0; i < n; i++) {
+        printf("Enter location %d name (one word): ", i + 1);
+        scanf("%29s", location[i]);
+    }
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            graph[i][j] = (i == j) ? 0 : INF;
+        }
+    }
+
+    printf("\nEnter distance between locations.\n");
+    printf("Enter -1 if there is no direct road.\n");
+
+    for (i = 0; i < n; i++) {
+        for (j = i + 1; j < n; j++) {
+            do {
+                printf("%s to %s: ",
+                       location[i], location[j]);
+                scanf("%d", &w);
+
+                if (w < -1 || w >= INF)
+                    printf("Enter -1 or a distance from 0 to 9998.\n");
+
+            } while (w < -1 || w >= INF);
+
+            if (w == -1)
+                graph[i][j] = graph[j][i] = INF;
+            else
+                graph[i][j] = graph[j][i] = w;
+        }
+    }
+
+    source = -1;
+    ready = 0;
+    printf("\nGraph created successfully!\n");
+}
+
+void displayMatrix()
+{
+    int i, j;
+
+    if (n == 0) {
+        printf("Enter the graph first.\n");
+        return;
+    }
+
+    printf("\nAdjacency Matrix:\n");
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            if (graph[i][j] == INF)
+                printf("%8s", "INF");
+            else
+                printf("%8d", graph[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void selectSource()
+{
+    int i, s;
+
+    if (n == 0) {
+        printf("Enter the graph first.\n");
+        return;
+    }
+
+    printf("\nCampus Locations:\n");
+
+    for (i = 0; i < n; i++)
+        printf("%d. %s\n", i + 1, location[i]);
+
+    printf("Select source location: ");
+    scanf("%d", &s);
+
+    if (s < 1 || s > n) {
+        printf("Invalid location!\n");
+        return;
+    }
+
+    source = s - 1;
+    ready = 0;
+    printf("Source selected: %s\n", location[source]);
+}
+
+void dijkstra()
+{
+    int i, j, count, u, min;
+
+    if (n == 0 || source == -1) {
+        printf("Enter graph and select source first.\n");
+        return;
+    }
+
+    for (i = 0; i < n; i++) {
+        dist[i] = INF;
+        visited[i] = 0;
+        parent[i] = -1;
+    }
+
+    dist[source] = 0;
+
+    for (count = 0; count < n; count++) {
+        min = INF;
+        u = -1;
+
+        for (i = 0; i < n; i++) {
+            if (!visited[i] && dist[i] < min) {
+                min = dist[i];
+                u = i;
+            }
+        }
+
+        if (u == -1)
+            break;
+
+        visited[u] = 1;
+
+        for (j = 0; j < n; j++) {
+            if (!visited[j] && graph[u][j] != INF &&
+                dist[u] != INF &&
+                dist[u] + graph[u][j] < dist[j]) {
+
+                dist[j] = dist[u] + graph[u][j];
+                parent[j] = u;
+            }
+        }
+    }
+
+    ready = 1;
+    printf("Shortest distances calculated!\n");
+}
+
+void printPath(int v)
+{
+    if (v == -1)
+        return;
+
+    printPath(parent[v]);
+
+    printf("%s", location[v]);
+
+    if (v != source)
+        printf(" -> ");
+}
+
+void displayDistances()
+{
+    int i;
+
+    if (!ready) {
+        printf("Run option 4 first.\n");
+        return;
+    }
+
+    printf("\nSource: %s\n", location[source]);
+    printf("\nDestination\tDistance\n");
+
+    for (i = 0; i < n; i++) {
+        printf("%s\t\t", location[i]);
+
+        if (dist[i] == INF)
+            printf("Unreachable\n");
+        else
+            printf("%d\n", dist[i]);
+    }
+}
+
+void displayPaths()
+{
+    int i;
+
+    if (!ready) {
+        printf("Run option 4 first.\n");
+        return;
+    }
+
+    printf("\nShortest Paths:\n");
+
+    for (i = 0; i < n; i++) {
+        printf("\nTo %s: ", location[i]);
+
+        if (dist[i] == INF) {
+            printf("No path exists\n");
+        } else {
+            printPath(i);
+            printf("\nDistance: %d\n", dist[i]);
+        }
+    }
+}
+
+int main()
+{
+    int choice;
+
+    do {
+        printf("\n--- CAMPUS SHORTEST ROUTE FINDER ---\n");
+        printf("1. Enter Campus Graph\n");
+        printf("2. Display Adjacency Matrix\n");
+        printf("3. Select Source Location\n");
+        printf("4. Find Shortest Distance\n");
+        printf("5. Display Shortest Paths\n");
+        printf("6. Display Distance to All Locations\n");
+        printf("7. Exit\n");
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1: enterGraph(); break;
+            case 2: displayMatrix(); break;
+            case 3: selectSource(); break;
+            case 4: dijkstra(); break;
+            case 5: displayPaths(); break;
+            case 6: displayDistances(); break;
+            case 7: printf("Program ended.\n"); break;
+            default: printf("Invalid choice!\n");
+        }
+
+    } while (choice != 7);
+
+    return 0;
+}
